@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fbf4ef" />
+  <meta name="description" content="属于两个人的小小宇宙：纪念日计时、照片相册、愿望清单与留言板，所有内容只保存在本机浏览器。" />
+  <title>两个人的小小宇宙 · 我们的情侣空间</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+  <!-- 标记 JS 可用：入场动画只在 .js 下启用，脚本失败时内容依然完整可见 -->
+  <script>
+    document.documentElement.classList.add("js");
+  </script>
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body>
+  <!-- ============================================================
+       全局装饰层：爱心飘落画布 + 纸张颗粒（纯装饰，不拦截点击）
+  ============================================================ -->
+  <canvas id="heartCanvas" class="heart-canvas" aria-hidden="true"></canvas>
+  <div class="paper-grain" aria-hidden="true"></div>
+
+  <!-- ============================================================
+       顶部悬浮导航（滚动时高亮当前分区）
+  ============================================================ -->
+  <header class="site-header">
+    <nav class="nav-pill" aria-label="分区导航">
+      <a class="nav-pill__brand" href="#top" aria-label="回到页面顶部">
+        <span class="nav-pill__heart" aria-hidden="true">♥</span>
+        <span class="nav-pill__brand-text">Our Little Universe</span>
+      </a>
+      <div class="nav-pill__links">
+        <a href="#timer" data-nav="timer">计时</a>
+        <a href="#gallery" data-nav="gallery">相册</a>
+        <a href="#wishes" data-nav="wishes">愿望</a>
+        <a href="#messages" data-nav="messages">留言</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- ==========================================================
+         Hero：开场区（名字、在一起的天数、快捷入口）
+    ========================================================== -->
+    <section class="hero section-shell" aria-labelledby="heroTitle">
+      <div class="hero__copy">
+        <p class="eyebrow reveal" id="heroEyebrow">
+          <span class="eyebrow__dot" aria-hidden="true"></span>
+          <span id="heroSinceText">SINCE 2026.07.03</span>
+        </p>
+
+        <h1 class="hero__title reveal" id="heroTitle">
+          两个人的<br />
+          <em>小小宇宙</em>
+        </h1>
+
+        <p class="hero__names reveal" id="heroNames">
+          雨欣 <span class="heart-sep" aria-hidden="true">♥</span> 海钊
+        </p>
+
+        <p class="hero__lede reveal">
+          把平凡的日子，过成值得收藏的纪念日。<br />
+          写下、拍下、许下，都安安稳稳留在这台设备里。
+        </p>
+
+        <div class="hero__actions reveal">
+          <button class="btn btn--primary" type="button" data-jump="#gallery">
+            上传我们的照片
+            <span class="btn__icon" aria-hidden="true">↗</span>
+          </button>
+          <button class="btn btn--ghost" type="button" data-jump="#messages">
+            写下此刻的心情
+          </button>
+        </div>
+
+        <ul class="hero__stats reveal" aria-label="内容概览">
+          <li><strong id="statPhotos">0</strong><span>照片</span></li>
+          <li><strong id="statWishes">0</strong><span>愿望</span></li>
+          <li><strong id="statMessages">0</strong><span>留言</span></li>
+        </ul>
+      </div>
+
+      <div class="hero__medallion reveal">
+        <div class="medallion" aria-hidden="true">
+          <span class="medallion__orbit"></span>
+          <span class="medallion__label">OUR DAYS</span>
+          <strong class="medallion__number" id="heroDayNumber">0</strong>
+          <span class="medallion__caption" id="heroDayCaption">从今天开始</span>
+          <span class="medallion__heart">♥</span>
+        </div>
+        <p class="hero__aside">每一天都算数</p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         01 计时模块：在一起时长 / 下一个纪念日 / 编辑纪念日
+    ========================================================== -->
+    <section class="section section-shell" id="timer" aria-labelledby="timerTitle">
+      <header class="section-head">
+        <div class="section-head__text">
+          <p class="section-kicker">01 / 计时</p>
+          <h2 class="section-title" id="timerTitle">我们的<em>纪念日</em></h2>
+          <p class="section-note" id="timerSince">从 2026 年 7 月 3 日开始，认真记录每一天。</p>
+        </div>
+        <button
+          class="btn btn--chip"
+          id="timerEditBtn"
+          type="button"
+          aria-expanded="false"
+          aria-controls="timerForm"
+        >
+          编辑纪念日
+        </button>
+      </header>
+
+      <div class="bezel reveal">
+        <div class="bezel__core timer-card">
+          <div class="timer-card__main">
+            <p class="timer-card__label">我们已经在一起</p>
+            <p class="timer-card__days">
+              <strong id="timerDays">0</strong><span>天</span>
+            </p>
+            <p class="timer-card__precise" id="timerPrecise">0 天 00 时 00 分 00 秒</p>
+          </div>
+
+          <div class="timer-card__side">
+            <div class="countdown">
+              <span class="countdown__label" id="countdownLabel">距离下一个纪念日</span>
+              <p class="countdown__value">
+                <strong id="countdownDays">0</strong><span>天</span>
+              </p>
+              <span class="countdown__hint" id="countdownHint">慢慢来，日子还长。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 纪念日编辑面板（默认收起） -->
+      <form class="editor-panel" id="timerForm" hidden>
+        <div class="editor-panel__grid">
+          <label class="field">
+            <span class="field__label">你的名字</span>
+            <input class="field__input" id="inputNameA" type="text" maxlength="12" autocomplete="off" placeholder="例如：雨欣" />
+          </label>
+          <label class="field">
+            <span class="field__label">TA 的名字</span>
+            <input class="field__input" id="inputNameB" type="text" maxlength="12" autocomplete="off" placeholder="例如：海钊" />
+          </label>
+          <label class="field">
+            <span class="field__label">在一起的纪念日</span>
+            <input class="field__input" id="inputStartDate" type="date" />
+          </label>
+        </div>
+        <p class="editor-panel__hint">日期会用于计算天数，修改后立即生效并自动保存。</p>
+        <div class="editor-panel__actions">
+          <button class="btn btn--primary" type="submit">保存纪念日</button>
+          <button class="btn btn--ghost" type="button" id="timerCancelBtn">取消</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ==========================================================
+         02 相册模块：单张上传 / 批量导入 / 网格画廊 / 灯箱预览
+    ========================================================== -->
+    <section class="section section-shell" id="gallery" aria-labelledby="galleryTitle">
+      <header class="section-head">
+        <div class="section-head__text">
+          <p class="section-kicker">02 / 相册</p>
+          <h2 class="section-title" id="galleryTitle">我们的<em>瞬间</em></h2>
+          <p class="section-note">照片会自动压缩后保存在本机浏览器，不会上传到任何服务器。</p>
+        </div>
+        <span class="counter-pill" id="galleryCount">0 张照片</span>
+      </header>
+
+      <div
+        class="dropzone reveal"
+        id="dropzone"
+        role="button"
+        tabindex="0"
+        aria-label="拖拽照片到这里，或点击选择多张照片批量导入"
+      >
+        <div class="dropzone__icon" aria-hidden="true">✿</div>
+        <p class="dropzone__title">把照片拖进来，或一次选择多张</p>
+        <p class="dropzone__hint">支持 JPG / PNG / WebP / GIF，单张会自动压缩，建议一次不超过 30 张</p>
+        <div class="dropzone__actions">
+          <button class="btn btn--primary" id="uploadSingleBtn" type="button">上传单张</button>
+          <button class="btn btn--soft" id="uploadMultiBtn" type="button">批量导入</button>
+        </div>
+        <input class="sr-only" id="fileInputSingle" type="file" accept="image/*" tabindex="-1" />
+        <input class="sr-only" id="fileInputMulti" type="file" accept="image/*" multiple tabindex="-1" />
+      </div>
+
+      <div class="import-progress" id="importProgress" hidden>
+        <span class="import-progress__spinner" aria-hidden="true"></span>
+        <span id="importProgressText">正在导入…</span>
+      </div>
+
+      <div class="gallery-grid" id="galleryGrid"></div>
+
+      <div class="empty-state" id="galleryEmpty">
+        <span class="empty-state__emoji" aria-hidden="true">📷</span>
+        <p>还没有照片。选一张最喜欢的，作为我们宇宙的第一颗星星。</p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         03 愿望清单：添加 / 勾选完成 / 删除 / 待完成与已完成分区
+    ========================================================== -->
+    <section class="section section-shell" id="wishes" aria-labelledby="wishesTitle">
+      <header class="section-head">
+        <div class="section-head__text">
+          <p class="section-kicker">03 / 愿望</p>
+          <h2 class="section-title" id="wishesTitle">一起完成的<em>小事</em></h2>
+          <p class="section-note">写下来，就有了出发的理由。完成后勾选，会亮起一颗小爱心。</p>
+        </div>
+        <span class="counter-pill" id="wishTotalCount">0 个愿望</span>
+      </header>
+
+      <form class="composer-inline reveal" id="wishForm" novalidate>
+        <label class="sr-only" for="wishInput">新的愿望</label>
+        <input
+          class="field__input field__input--lg"
+          id="wishInput"
+          name="wish"
+          type="text"
+          maxlength="60"
+          autocomplete="off"
+          placeholder="想一起去做的事…比如：去看一次冬天的海"
+        />
+        <button class="btn btn--primary" type="submit">许下愿望</button>
+      </form>
+
+      <div class="wish-tabs" role="tablist" aria-label="愿望状态">
+        <button
+          class="wish-tab is-active"
+          id="wishTabPending"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="wishList"
+          data-wish-tab="pending"
+        >
+          待完成 <span class="count-badge" id="wishPendingCount">0</span>
+        </button>
+        <button
+          class="wish-tab"
+          id="wishTabDone"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="wishList"
+          data-wish-tab="done"
+        >
+          已完成 <span class="count-badge" id="wishDoneCount">0</span>
+        </button>
+      </div>
+
+      <ul class="wish-list" id="wishList" role="tabpanel" aria-live="polite"></ul>
+
+      <div class="empty-state" id="wishEmpty">
+        <span class="empty-state__emoji" aria-hidden="true">✦</span>
+        <p>这里还空着。写下第一个愿望吧，哪怕只是「一起看一场日落」。</p>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         04 留言板：新增留言 / 删除留言 / 按时间倒序展示
+    ========================================================== -->
+    <section class="section section-shell" id="messages" aria-labelledby="messagesTitle">
+      <header class="section-head">
+        <div class="section-head__text">
+          <p class="section-kicker">04 / 留言</p>
+          <h2 class="section-title" id="messagesTitle">想对你说的<em>话</em></h2>
+          <p class="section-note">今天的天气、路边的小猫、突然的想念，都可以写在这里。</p>
+        </div>
+        <span class="counter-pill" id="messageCountPill">0 条留言</span>
+      </header>
+
+      <div class="bezel reveal">
+        <div class="bezel__core message-composer">
+          <form id="messageForm" novalidate>
+            <div class="message-composer__row">
+              <label class="field field--name">
+                <span class="field__label">落款</span>
+                <input
+                  class="field__input"
+                  id="messageName"
+                  type="text"
+                  maxlength="12"
+                  autocomplete="off"
+                  placeholder="我"
+                />
+              </label>
+              <span class="message-composer__tip">写给 TA 的一句话</span>
+            </div>
+            <label class="field">
+              <span class="sr-only">留言内容</span>
+              <textarea
+                class="field__input field__textarea"
+                id="messageText"
+                maxlength="200"
+                rows="4"
+                placeholder="今天路过花店，看到你喜欢的白色郁金香…"
+              ></textarea>
+            </label>
+            <div class="message-composer__footer">
+              <span class="char-counter" id="messageCounter">0 / 200</span>
+              <button class="btn btn--primary" type="submit">
+                寄出这条留言
+                <span class="btn__icon" aria-hidden="true">♥</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="message-list" id="messageList"></div>
+
+      <div class="empty-state" id="messageEmpty">
+        <span class="empty-state__emoji" aria-hidden="true">💌</span>
+        <p>还没有留言。第一句话不用想太久，「今天也很想你」就很好。</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer section-shell">
+    <p class="site-footer__line">Made for two · 所有内容仅保存在当前浏览器</p>
+    <p class="site-footer__hint">小提示：清除浏览器数据会同时清空相册、愿望与留言，记得偶尔备份喜欢的照片。</p>
+  </footer>
+
+  <!-- ============================================================
+       灯箱：点击照片放大预览（支持左右切换、Esc 关闭、单张删除）
+  ============================================================ -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="照片预览" hidden>
+    <button class="lightbox__close" id="lightboxClose" type="button" aria-label="关闭预览">×</button>
+    <button class="lightbox__nav lightbox__nav--prev" id="lightboxPrev" type="button" aria-label="上一张">‹</button>
+
+    <figure class="lightbox__figure">
+      <img class="lightbox__image" id="lightboxImage" alt="" />
+      <figcaption class="lightbox__caption" id="lightboxCaption"></figcaption>
+    </figure>
+
+    <button class="lightbox__nav lightbox__nav--next" id="lightboxNext" type="button" aria-label="下一张">›</button>
+    <button class="lightbox__delete" id="lightboxDelete" type="button">删除这张照片</button>
+  </div>
+
+  <!-- 全局轻提示容器 -->
+  <div class="toast-stack" id="toastStack" role="status" aria-live="polite"></div>
+
+  <!-- 存储异常提示条 -->
+  <div class="storage-alert" id="storageAlert" role="alert" hidden>
+    <span id="storageAlertText">浏览器存储空间不足，最新内容可能没有保存。</span>
+    <button class="storage-alert__close" id="storageAlertClose" type="button" aria-label="关闭提示">×</button>
+  </div>
+
+  <!-- ============================================================
+       脚本按模块加载：工具 → 存储 → 四个业务模块 → 爱心动画 → 启动
+       （普通 script，双击 index.html 也能直接运行）
+  ============================================================ -->
+  <script src="js/utils.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/gallery.js"></script>
+  <script src="js/wishes.js"></script>
+  <script src="js/messages.js"></script>
+  <script src="js/hearts.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

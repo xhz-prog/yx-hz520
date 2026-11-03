@@ -1,0 +1,354 @@
+/* ============================================================
+   animations.css · 动画层（全站动画集中在这里）
+   原则：只动 transform / opacity / filter，避免触发布局重排；
+        所有时长与缓动统一使用 base.css 里的变量；
+        尊重系统「减少动态效果」设置（prefers-reduced-motion）。
+   目录：
+     1. 滚动入场 reveal
+     2. Hero 纪念章与装饰呼吸
+     3. 愿望勾选庆祝 / 列表项进出场 / 相册入场
+     4. toast 进出场 / 导入 spinner / 灯箱补充动效
+     5. 减弱动态效果适配
+   ============================================================ */
+
+/* ---------- 1. 滚动入场 reveal ----------
+   由 main.js 用 IntersectionObserver 添加 .is-visible；
+   html.js 由 <head> 里的内联脚本提前加上，避免 JS 失效时内容被隐藏。 */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  filter: blur(6px);
+  transition:
+    opacity 0.9s var(--ease-soft),
+    transform 0.9s var(--ease-soft),
+    filter 0.9s var(--ease-soft);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+.js .reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+  will-change: auto;
+}
+
+/* ---------- 2. Hero 纪念章与装饰 ---------- */
+/* 缓缓浮动的纪念章，像悬浮在空气里 */
+@keyframes medallionFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.hero__medallion .medallion {
+  animation: medallionFloat 7s var(--ease-soft) infinite;
+}
+
+/* 外圈虚线极慢自转 */
+@keyframes orbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.medallion__orbit {
+  animation: orbitSpin 60s linear infinite;
+}
+
+/* 名字中间的小爱心呼吸 */
+@keyframes heartPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+}
+
+.heart-sep {
+  animation: heartPulse 2.8s var(--ease-soft) infinite;
+}
+
+/* 标题下划线呼吸 */
+@keyframes underlineBreathe {
+  0%,
+  100% {
+    transform: scaleX(0.94);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.hero__title em::after {
+  transform-origin: left center;
+  animation: underlineBreathe 6s var(--ease-soft) infinite;
+}
+
+/* 数字切换时轻轻一跳（JS 在倒计时数字变化时加 .is-ticking，动画结束移除） */
+@keyframes numberTick {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  35% {
+    transform: translateY(-4px);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.is-ticking {
+  display: inline-block;
+  animation: numberTick 0.55s var(--ease-out);
+}
+
+/* ---------- 3. 愿望 / 相册 / 留言的动效 ---------- */
+
+/* 新条目淡入：愿望、留言、照片共用 */
+@keyframes itemIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.gallery-item,
+.wish-item,
+.message-card {
+  animation: itemIn 0.6s var(--ease-soft) both;
+}
+
+/* 删除前先收拢，JS 等动画结束再真正移除数据 */
+@keyframes itemOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    max-height: 160px;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+  }
+}
+
+.is-removing {
+  overflow: hidden;
+  animation: itemOut 0.42s var(--ease-out) forwards !important;
+  pointer-events: none;
+}
+
+/* 勾选完成：卡片轻轻一颤 + 一颗小爱心升起 */
+@keyframes wishCelebrate {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.015);
+  }
+  60% {
+    transform: scale(0.995);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes heartRise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.5);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -46px) scale(1.15);
+  }
+}
+
+.wish-item {
+  position: relative;
+}
+
+.wish-item.is-celebrating {
+  animation: wishCelebrate 0.6s var(--ease-spring);
+}
+
+.wish-item.is-celebrating::after {
+  content: "♥";
+  position: absolute;
+  left: 31px;
+  top: 50%;
+  font-size: 14px;
+  color: var(--rose);
+  pointer-events: none;
+  animation: heartRise 1s var(--ease-out) forwards;
+}
+
+/* 勾选圆圈完成瞬间的回弹 */
+@keyframes checkPop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.22);
+  }
+  70% {
+    transform: scale(0.94);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.wish-item.is-done .wish-item__check {
+  animation: checkPop 0.5s var(--ease-spring);
+}
+
+/* 相册导入完成后的柔和闪光 */
+@keyframes photoShimmer {
+  0% {
+    opacity: 0;
+    transform: translateX(-60%) skewX(-12deg);
+  }
+  40% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(160%) skewX(-12deg);
+  }
+}
+
+.gallery-item.is-new::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 75%
+  );
+  animation: photoShimmer 1.2s var(--ease-out) 0.15s both;
+  pointer-events: none;
+}
+
+/* ---------- 4. toast / spinner / 灯箱 ---------- */
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast {
+  animation: toastIn 0.45s var(--ease-spring) both;
+}
+
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+}
+
+.toast.is-leaving {
+  animation: toastOut 0.32s var(--ease-out) forwards;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.import-progress__spinner {
+  animation: spin 0.9s linear infinite;
+}
+
+/* 灯箱切换图片时，图片本身已由 CSS 过渡处理；
+   这里只给切换加一个极短的淡入，避免看起来生硬 */
+@keyframes lightboxFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.lightbox.is-switching .lightbox__image {
+  animation: lightboxFade 0.32s var(--ease-out);
+}
+
+/* ---------- 5. 减弱动态效果 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+
+  .hero__medallion .medallion,
+  .medallion__orbit,
+  .heart-sep,
+  .hero__title em::after,
+  .gallery-item,
+  .wish-item,
+  .message-card,
+  .toast,
+  .is-ticking,
+  .wish-item.is-done .wish-item__check,
+  .wish-item.is-celebrating,
+  .wish-item.is-celebrating::after,
+  .gallery-item.is-new::after,
+  .lightbox.is-switching .lightbox__image {
+    animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* 系统开启减弱动效时，canvas 爱心由 JS 停止绘制（见 js/hearts.js） */
